@@ -1,0 +1,413 @@
+import React, { useMemo, useState } from "react";
+import { Calendar, Clock3, Bell, User, CheckCircle2, XCircle, RefreshCcw, LayoutDashboard, ClipboardList, Settings, Search } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+
+const initialAppointments = [
+  {
+    id: 1,
+    student: "Benedict Tanghal",
+    purpose: "Academic Advising",
+    counselor: "Ms. Rivera",
+    date: "2026-04-25",
+    time: "09:00 AM",
+    status: "Pending",
+    note: "Need help with subject planning for next semester.",
+  },
+  {
+    id: 2,
+    student: "Angela Cruz",
+    purpose: "Counseling",
+    counselor: "Mr. Santos",
+    date: "2026-04-26",
+    time: "01:30 PM",
+    status: "Approved",
+    note: "Personal concern and stress management.",
+  },
+  {
+    id: 3,
+    student: "Miguel Reyes",
+    purpose: "Student Support",
+    counselor: "Ms. Rivera",
+    date: "2026-04-27",
+    time: "10:30 AM",
+    status: "Rescheduled",
+    note: "Follow-up for support documents.",
+  },
+];
+
+const availableSlots = {
+  "Ms. Rivera": ["09:00 AM", "10:30 AM", "02:00 PM"],
+  "Mr. Santos": ["08:30 AM", "01:30 PM", "03:00 PM"],
+};
+
+const statusStyles = {
+  Pending: "bg-amber-100 text-amber-700 border-amber-200",
+  Approved: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  Rejected: "bg-rose-100 text-rose-700 border-rose-200",
+  Rescheduled: "bg-sky-100 text-sky-700 border-sky-200",
+  Completed: "bg-slate-100 text-slate-700 border-slate-200",
+};
+
+function StatCard({ title, value, icon: Icon, hint }) {
+  return (
+    <Card className="rounded-3xl border-0 shadow-sm">
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-sm text-slate-500">{title}</p>
+            <h3 className="mt-2 text-3xl font-bold text-slate-900">{value}</h3>
+            <p className="mt-2 text-sm text-slate-500">{hint}</p>
+          </div>
+          <div className="rounded-2xl bg-teal-50 p-3 text-teal-600">
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StatusBadge({ status }) {
+  return (
+    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${statusStyles[status] || "bg-slate-100 text-slate-700 border-slate-200"}`}>
+      {status}
+    </span>
+  );
+}
+
+function AppointmentCard({ item, actions }) {
+  return (
+    <Card className="rounded-3xl border-0 shadow-sm">
+      <CardContent className="p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="text-lg font-semibold text-slate-900">{item.purpose}</h4>
+              <StatusBadge status={item.status} />
+            </div>
+            <p className="text-sm text-slate-600"><span className="font-medium">Student:</span> {item.student}</p>
+            <p className="text-sm text-slate-600"><span className="font-medium">Counselor:</span> {item.counselor}</p>
+            <p className="text-sm text-slate-600"><span className="font-medium">Schedule:</span> {item.date} • {item.time}</p>
+            <p className="text-sm text-slate-500">{item.note}</p>
+          </div>
+          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function GuidanceAppointmentSystemPrototype() {
+  const [role, setRole] = useState("student");
+  const [appointments, setAppointments] = useState(initialAppointments);
+  const [search, setSearch] = useState("");
+  const [form, setForm] = useState({
+    student: "Benedict Tanghal",
+    purpose: "Counseling",
+    counselor: "Ms. Rivera",
+    date: "",
+    time: "09:00 AM",
+    note: "",
+  });
+
+  const filteredAppointments = useMemo(() => {
+    const q = search.toLowerCase();
+    return appointments.filter((item) =>
+      [item.student, item.purpose, item.counselor, item.status, item.date, item.time]
+        .join(" ")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [appointments, search]);
+
+  const stats = useMemo(() => ({
+    total: appointments.length,
+    pending: appointments.filter((a) => a.status === "Pending").length,
+    approved: appointments.filter((a) => a.status === "Approved").length,
+    counselors: new Set(appointments.map((a) => a.counselor)).size,
+  }), [appointments]);
+
+  const createAppointment = () => {
+    if (!form.date || !form.time || !form.note.trim()) return;
+    const newAppointment = {
+      id: Date.now(),
+      student: form.student,
+      purpose: form.purpose,
+      counselor: form.counselor,
+      date: form.date,
+      time: form.time,
+      status: "Pending",
+      note: form.note,
+    };
+    setAppointments((prev) => [newAppointment, ...prev]);
+    setForm((prev) => ({ ...prev, date: "", time: availableSlots[prev.counselor][0], note: "" }));
+  };
+
+  const updateStatus = (id, status) => {
+    setAppointments((prev) => prev.map((item) => (item.id === id ? { ...item, status } : item)));
+  };
+
+  const studentAppointments = appointments.filter((a) => a.student === "Benedict Tanghal");
+  const counselorAppointments = filteredAppointments.filter((a) => a.counselor === "Ms. Rivera");
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
+        <aside className="border-r border-slate-200 bg-white p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-600 text-white font-bold">G</div>
+            <div>
+              <h1 className="text-lg font-bold">Guidance Appoint</h1>
+              <p className="text-sm text-slate-500">School Support Portal</p>
+            </div>
+          </div>
+
+          <div className="mt-8 space-y-2">
+            <button className="flex w-full items-center gap-3 rounded-2xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-800">
+              <LayoutDashboard className="h-4 w-4" /> Dashboard
+            </button>
+            <button className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-600 hover:bg-slate-50">
+              <ClipboardList className="h-4 w-4" /> Appointments
+            </button>
+            <button className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-600 hover:bg-slate-50">
+              <Calendar className="h-4 w-4" /> Schedule
+            </button>
+            <button className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-600 hover:bg-slate-50">
+              <Bell className="h-4 w-4" /> Notifications
+            </button>
+            <button className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm text-slate-600 hover:bg-slate-50">
+              <Settings className="h-4 w-4" /> Settings
+            </button>
+          </div>
+
+          <Card className="mt-8 rounded-3xl border-0 bg-teal-600 text-white shadow-sm">
+            <CardContent className="p-5">
+              <p className="text-sm text-teal-100">Role Preview</p>
+              <div className="mt-3">
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger className="border-0 bg-white/10 text-white">
+                    <SelectValue placeholder="Choose role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="counselor">Counselor</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <p className="mt-3 text-xs text-teal-100">Switch views to preview the website flow for each user type.</p>
+            </CardContent>
+          </Card>
+        </aside>
+
+        <main className="p-6 md:p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-medium uppercase tracking-[0.2em] text-teal-600">Guidance Appointment System</p>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight">{role === "student" ? "Student Dashboard" : role === "counselor" ? "Counselor Dashboard" : "Admin Dashboard"}</h2>
+              <p className="mt-2 text-slate-500">A clean website prototype for booking counseling, advising, and student support appointments.</p>
+            </div>
+            <div className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
+              <Search className="h-4 w-4 text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search appointments"
+                className="w-56 bg-transparent text-sm outline-none placeholder:text-slate-400"
+              />
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard title="Total Appointments" value={stats.total} icon={Calendar} hint="All current records" />
+            <StatCard title="Pending Requests" value={stats.pending} icon={Clock3} hint="Awaiting counselor action" />
+            <StatCard title="Approved" value={stats.approved} icon={CheckCircle2} hint="Confirmed schedules" />
+            <StatCard title="Active Counselors" value={stats.counselors} icon={User} hint="Counselors in the system" />
+          </div>
+
+          {role === "student" && (
+            <div className="mt-8 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+              <Card className="rounded-3xl border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Book an Appointment</CardTitle>
+                  <CardDescription>Submit a new request for counseling, advising, or student support.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-slate-700">Purpose</label>
+                    <Select value={form.purpose} onValueChange={(v) => setForm((p) => ({ ...p, purpose: v }))}>
+                      <SelectTrigger className="rounded-2xl"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Counseling">Counseling</SelectItem>
+                        <SelectItem value="Academic Advising">Academic Advising</SelectItem>
+                        <SelectItem value="Student Support">Student Support</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Counselor</label>
+                    <Select value={form.counselor} onValueChange={(v) => setForm((p) => ({ ...p, counselor: v, time: availableSlots[v][0] }))}>
+                      <SelectTrigger className="rounded-2xl"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Ms. Rivera">Ms. Rivera</SelectItem>
+                        <SelectItem value="Mr. Santos">Mr. Santos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Date</label>
+                    <Input type="date" value={form.date} onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))} className="rounded-2xl" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">Time Slot</label>
+                    <Select value={form.time} onValueChange={(v) => setForm((p) => ({ ...p, time: v }))}>
+                      <SelectTrigger className="rounded-2xl"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {availableSlots[form.counselor].map((slot) => (
+                          <SelectItem key={slot} value={slot}>{slot}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-medium text-slate-700">Short Description</label>
+                    <Textarea
+                      value={form.note}
+                      onChange={(e) => setForm((p) => ({ ...p, note: e.target.value }))}
+                      className="min-h-[120px] rounded-2xl"
+                      placeholder="Briefly describe your concern..."
+                    />
+                  </div>
+
+                  <div className="md:col-span-2 flex justify-end">
+                    <Button onClick={createAppointment} className="rounded-2xl bg-teal-600 px-6 hover:bg-teal-700">Submit Request</Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle>My Appointments</CardTitle>
+                  <CardDescription>Track your current and past requests.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {studentAppointments.map((item) => (
+                    <AppointmentCard key={item.id} item={item} />
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {role === "counselor" && (
+            <Tabs defaultValue="requests" className="mt-8">
+              <TabsList className="grid w-full max-w-md grid-cols-2 rounded-2xl bg-white p-1 shadow-sm">
+                <TabsTrigger value="requests" className="rounded-2xl">Requests</TabsTrigger>
+                <TabsTrigger value="schedule" className="rounded-2xl">Schedule</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="requests" className="mt-6 space-y-4">
+                {counselorAppointments.map((item) => (
+                  <AppointmentCard
+                    key={item.id}
+                    item={item}
+                    actions={
+                      <>
+                        <Button size="sm" className="rounded-2xl bg-emerald-600 hover:bg-emerald-700" onClick={() => updateStatus(item.id, "Approved")}>
+                          Approve
+                        </Button>
+                        <Button size="sm" variant="outline" className="rounded-2xl" onClick={() => updateStatus(item.id, "Rescheduled")}>
+                          Reschedule
+                        </Button>
+                        <Button size="sm" variant="destructive" className="rounded-2xl" onClick={() => updateStatus(item.id, "Rejected")}>
+                          Reject
+                        </Button>
+                      </>
+                    }
+                  />
+                ))}
+              </TabsContent>
+
+              <TabsContent value="schedule" className="mt-6">
+                <Card className="rounded-3xl border-0 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Available Time Slots</CardTitle>
+                    <CardDescription>Preview counselor availability for student booking.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 md:grid-cols-2">
+                    {Object.entries(availableSlots).map(([name, slots]) => (
+                      <div key={name} className="rounded-3xl bg-slate-50 p-5">
+                        <h4 className="font-semibold text-slate-900">{name}</h4>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {slots.map((slot) => (
+                            <Badge key={slot} variant="secondary" className="rounded-full px-3 py-1">{slot}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          )}
+
+          {role === "admin" && (
+            <div className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+              <Card className="rounded-3xl border-0 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Appointment Overview</CardTitle>
+                  <CardDescription>Admin-wide view of all appointment activity.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {filteredAppointments.map((item) => (
+                    <AppointmentCard key={item.id} item={item} />
+                  ))}
+                </CardContent>
+              </Card>
+
+              <div className="space-y-6">
+                <Card className="rounded-3xl border-0 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>Quick Actions</CardTitle>
+                    <CardDescription>Suggested admin controls for the next build.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-3">
+                    <Button className="justify-start rounded-2xl bg-teal-600 hover:bg-teal-700">Add Counselor</Button>
+                    <Button variant="outline" className="justify-start rounded-2xl">Manage Concern Types</Button>
+                    <Button variant="outline" className="justify-start rounded-2xl">View Reports</Button>
+                    <Button variant="outline" className="justify-start rounded-2xl">Export Appointments</Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-3xl border-0 shadow-sm">
+                  <CardHeader>
+                    <CardTitle>System Notes</CardTitle>
+                    <CardDescription>Starter scope for the website version.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm text-slate-600">
+                    <div className="flex items-start gap-3"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" /> Student booking form</div>
+                    <div className="flex items-start gap-3"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" /> Counselor approval flow</div>
+                    <div className="flex items-start gap-3"><CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" /> Admin monitoring dashboard</div>
+                    <div className="flex items-start gap-3"><RefreshCcw className="mt-0.5 h-4 w-4 text-sky-600" /> Database integration next</div>
+                    <div className="flex items-start gap-3"><Bell className="mt-0.5 h-4 w-4 text-amber-600" /> Email / in-app notifications later</div>
+                    <div className="flex items-start gap-3"><XCircle className="mt-0.5 h-4 w-4 text-rose-600" /> No authentication yet</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
