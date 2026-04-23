@@ -12,6 +12,7 @@
       --bg:#f4f7fb; --panel:#ffffff; --panel-soft:#f8fbff; --line:#dde7f2; --text:#17304b; --muted:#6f829a;
       --teal:#0f766e; --teal-2:#14b8a6; --teal-soft:#e5faf7; --indigo:#4f46e5; --indigo-soft:#eef0ff;
       --green:#15803d; --green-soft:#eaf7ee; --amber:#b45309; --amber-soft:#fff4e4; --rose:#be123c; --rose-soft:#ffe7ed;
+      --blue:#2563eb; --blue-soft:#eaf2ff;
       --shadow:0 20px 50px rgba(19, 41, 68, .08); --radius-xl:28px; --radius-lg:20px; --radius-md:16px; --radius-sm:12px;
     }
     *{box-sizing:border-box} html,body{margin:0;padding:0;font-family:Inter,system-ui,sans-serif;color:var(--text);background:
@@ -65,147 +66,172 @@
     .mobile-bar{display:none;position:sticky;top:0;z-index:40;padding:14px 16px;background:rgba(248,251,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(221,231,242,.95)}
     .mobile-shell{display:flex;align-items:center;justify-content:space-between}.mobile-menu{border:1px solid var(--line);background:#fff;border-radius:14px;padding:10px 12px;cursor:pointer}
     .empty{padding:18px;border-radius:18px;background:#f8fbff;border:1px dashed #d8e6f2;color:var(--muted);text-align:center;margin-top:14px}
+    .page-grid{display:grid;gap:18px;margin-top:20px}
+    .list-row{display:grid;grid-template-columns:1.4fr .9fr .9fr .8fr;gap:12px;padding:14px 0;border-bottom:1px solid #ebf1f7;font-size:14px;align-items:center}
+    .list-row.head{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8ca0b8;padding-top:0}
+    .notif{display:flex;gap:14px;padding:16px;border-radius:18px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid #e8eef6;margin-top:12px}.notif-icon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:var(--blue-soft);color:var(--blue);font-weight:800;flex:none}
+    .profile{display:grid;grid-template-columns:92px 1fr;gap:18px;align-items:center}.avatar{width:92px;height:92px;border-radius:28px;display:grid;place-items:center;background:linear-gradient(135deg,#0f766e,#14b8a6);color:#fff;font-size:32px;font-weight:800}
+    .pill{display:inline-flex;align-items:center;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:800;background:#f3f7fb;border:1px solid #e2ebf5;color:#5c7088}
+    .action-row{display:flex;gap:10px;flex-wrap:wrap}
     @media (max-width:1100px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.content-grid{grid-template-columns:1fr}.login-shell{grid-template-columns:1fr;padding:18px}.hero h1{max-width:none}}
-    @media (max-width:860px){.mobile-bar{display:block}.layout{grid-template-columns:1fr}.sidebar{position:fixed;left:0;top:67px;bottom:0;width:min(86vw,310px);height:auto;transform:translateX(-110%);transition:.22s;z-index:50;border-right:1px solid var(--line)}.sidebar.open{transform:none}.main{padding:18px}.topbar{display:block}.search{margin-top:14px;min-width:0;width:100%}}
-    @media (max-width:640px){.stats,.two-col,.feature-grid{grid-template-columns:1fr}.hero-strip h2{font-size:26px}.login-card{padding:22px}.appointment-top{flex-direction:column}.search{padding:11px 12px}}
+    @media (max-width:860px){.mobile-bar{display:block}.layout{grid-template-columns:1fr}.sidebar{position:fixed;left:0;top:67px;bottom:0;height:auto;width:290px;z-index:50;transform:translateX(-105%);transition:.22s}.sidebar.open{transform:translateX(0)}.main{padding:18px}.topbar{flex-direction:column;align-items:stretch}.search{min-width:0;width:100%}.list-row{grid-template-columns:1fr}.list-row.head{display:none}}
+    @media (max-width:640px){.stats{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}.feature-grid{grid-template-columns:1fr}.hero,.login-card,.card{border-radius:24px}.hero-strip h2{font-size:26px}.profile{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-<div class="mobile-bar hidden" id="mobileBar">
-  <div class="mobile-shell">
-    <button class="mobile-menu" onclick="toggleSidebar()">☰</button>
-    <strong>Guidance Appointment System</strong>
-    <button class="mobile-menu" onclick="logout()">↩</button>
-  </div>
-</div>
-<div id="app" class="app"></div>
+  <div class="mobile-bar hidden" id="mobileBar"><div class="mobile-shell"><strong>Guidance Portal</strong><button class="mobile-menu" onclick="toggleSidebar()">☰ Menu</button></div></div>
+  <div id="app" class="app"></div>
 <script>
 const DEMO_USERS = [
-  { role:'student', name:'Benedict Tanghal', email:'student@school.edu', password:'student123', badge:'Student' },
-  { role:'counselor', name:'Ms. Rivera', email:'counselor@school.edu', password:'counselor123', badge:'Counselor' },
-  { role:'admin', name:'Admin Office', email:'admin@school.edu', password:'admin123', badge:'Admin' }
+  {role:'student',name:'Benedict Tanghal',email:'student@school.edu',password:'student123'},
+  {role:'counselor',name:'Ms. Rivera',email:'counselor@school.edu',password:'counselor123'},
+  {role:'admin',name:'Admin Office',email:'admin@school.edu',password:'admin123'}
 ];
+const SLOTS = {
+  'Ms. Rivera':['09:00 AM','10:30 AM','02:00 PM'],
+  'Mr. Santos':['08:30 AM','01:30 PM','03:00 PM']
+};
 const INITIAL_APPOINTMENTS = [
-  { id:1, student:'Benedict Tanghal', purpose:'Academic Advising', counselor:'Ms. Rivera', date:'2026-04-25', time:'09:00 AM', status:'Pending', note:'Need help with subject planning for next semester.' },
-  { id:2, student:'Angela Cruz', purpose:'Counseling', counselor:'Mr. Santos', date:'2026-04-26', time:'01:30 PM', status:'Approved', note:'Personal concern and stress management.' },
-  { id:3, student:'Miguel Reyes', purpose:'Student Support', counselor:'Ms. Rivera', date:'2026-04-27', time:'10:30 AM', status:'Rescheduled', note:'Follow-up for support documents.' }
+  {id:1,student:'Benedict Tanghal',purpose:'Academic Advising',counselor:'Ms. Rivera',date:'2026-04-25',time:'09:00 AM',status:'Pending',note:'Need help with subject planning for next semester.'},
+  {id:2,student:'Angela Cruz',purpose:'Counseling',counselor:'Mr. Santos',date:'2026-04-26',time:'01:30 PM',status:'Approved',note:'Personal concern and stress management.'},
+  {id:3,student:'Miguel Reyes',purpose:'Student Support',counselor:'Ms. Rivera',date:'2026-04-27',time:'10:30 AM',status:'Rescheduled',note:'Follow-up for support documents.'}
 ];
-const SLOTS = { 'Ms. Rivera':['09:00 AM','10:30 AM','02:00 PM'], 'Mr. Santos':['08:30 AM','01:30 PM','03:00 PM'] };
+const INITIAL_NOTIFICATIONS = [
+  {id:1,title:'Appointment approved',message:'Your academic advising request with Ms. Rivera was approved.',time:'Today · 9:12 AM'},
+  {id:2,title:'New booking reminder',message:'Students can now reserve available guidance slots for next week.',time:'Yesterday · 4:20 PM'},
+  {id:3,title:'Counselor note',message:'Please bring any supporting forms for your student support consultation.',time:'Yesterday · 10:03 AM'}
+];
+const NAV = {
+  student:[
+    {id:'dashboard',label:'Dashboard',icon:'◫'},
+    {id:'appointments',label:'My Appointments',icon:'🗂'},
+    {id:'schedule',label:'Available Schedule',icon:'🗓'},
+    {id:'notifications',label:'Notifications',icon:'🔔'},
+    {id:'settings',label:'Settings',icon:'⚙'}
+  ],
+  counselor:[
+    {id:'dashboard',label:'Dashboard',icon:'◫'},
+    {id:'appointments',label:'Requests',icon:'🗂'},
+    {id:'schedule',label:'Availability',icon:'🗓'},
+    {id:'notifications',label:'Notifications',icon:'🔔'},
+    {id:'settings',label:'Settings',icon:'⚙'}
+  ],
+  admin:[
+    {id:'dashboard',label:'Dashboard',icon:'◫'},
+    {id:'appointments',label:'All Appointments',icon:'🗂'},
+    {id:'users',label:'Users',icon:'👥'},
+    {id:'notifications',label:'Notifications',icon:'🔔'},
+    {id:'settings',label:'Settings',icon:'⚙'}
+  ]
+};
 const state = {
-  screen:'login', role:'student', currentUser:null, authError:'', search:'', sidebarOpen:false,
-  appointments: JSON.parse(JSON.stringify(INITIAL_APPOINTMENTS)),
-  form:{ student:'Benedict Tanghal', purpose:'Counseling', counselor:'Ms. Rivera', date:'', time:'09:00 AM', note:'' },
-  loginForm:{ email:'', password:'' }, successMessage:'', counselorTab:'requests'
+  screen:'login', role:'student', currentUser:null, sidebarOpen:false,
+  loginForm:{email:'',password:''}, authError:'', search:'', page:'dashboard',
+  appointments:[...INITIAL_APPOINTMENTS], notifications:[...INITIAL_NOTIFICATIONS],
+  successMessage:'',
+  form:{ student:'Benedict Tanghal', purpose:'Counseling', counselor:'Ms. Rivera', date:'', time:'09:00 AM', note:'' }
 };
 const app = document.getElementById('app');
-const escapeHtml = (s='') => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function filteredAppointments(){ const q=state.search.trim().toLowerCase(); if(!q) return state.appointments; return state.appointments.filter(a=>[a.student,a.purpose,a.counselor,a.date,a.time,a.status,a.note].join(' ').toLowerCase().includes(q)); }
+function escapeHtml(v){ return String(v ?? '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function statusClass(status){ return String(status).toLowerCase(); }
 function stats(){ return { total:state.appointments.length, pending:state.appointments.filter(a=>a.status==='Pending').length, approved:state.appointments.filter(a=>a.status==='Approved').length, counselors:new Set(state.appointments.map(a=>a.counselor)).size }; }
-function statusClass(s){ return (s||'').toLowerCase(); }
+function filteredAppointments(){ const q = state.search.trim().toLowerCase(); return state.appointments.filter(a => !q || [a.student,a.purpose,a.counselor,a.status,a.date,a.time,a.note].join(' ').toLowerCase().includes(q)); }
+function currentNav(){ return NAV[state.role] || NAV.student; }
+function pageTitle(){ const item = currentNav().find(n=>n.id===state.page); return item ? item.label : 'Dashboard'; }
+function pageDesc(){
+  const map = {
+    dashboard:'Overview of appointments, activity, and quick system status.',
+    appointments: state.role==='student' ? 'Book new sessions and track your requests in one place.' : state.role==='counselor' ? 'Review and update student requests from your queue.' : 'Review every appointment across the system.',
+    schedule: state.role==='student' ? 'Check open guidance time slots before booking.' : 'Manage or review counselor availability.',
+    notifications:'Stay updated with confirmations, reminders, and system messages.',
+    settings:'Manage profile details and basic system preferences.',
+    users:'View the current user list and school roles.'
+  };
+  return map[state.page] || 'Manage this section of the system.';
+}
 function renderLogin(){
   document.getElementById('mobileBar').classList.add('hidden');
-  return `
-    <div class="login-shell">
-      <section class="hero">
-        <div>
-          <span class="badge">Guidance Appointment System</span>
-          <h1>Private, organized support for every student.</h1>
-          <p>This standalone build fixes the broken version and starts the system with a real sign-in flow. Students can request appointments, counselors can manage requests, and admins can monitor the whole portal using a calmer, more thoughtful interface.</p>
-          <div class="feature-grid">
-            <div class="feature"><strong>Student booking</strong><span>Simple appointment requests with clearer form sections and less visual noise.</span></div>
-            <div class="feature"><strong>Counselor workflow</strong><span>Review, approve, reject, or reschedule requests in one focused dashboard.</span></div>
-            <div class="feature"><strong>Admin visibility</strong><span>See records, activity, and overall system health in one place.</span></div>
-            <div class="feature"><strong>Softer interface</strong><span>Better spacing, color balance, typography, and mobile responsiveness.</span></div>
-          </div>
-        </div>
-        <div class="feature"><strong>Demo access</strong><span>Use any demo account on the right to enter instantly. This makes the next system features easier to build on a proper structure.</span></div>
-      </section>
-      <section class="login-wrap">
-        <div class="login-card">
-          <h2>Sign in</h2>
-          <p>Access the correct dashboard based on your school role.</p>
-          ${state.authError ? `<div class="error">${escapeHtml(state.authError)}</div>` : ''}
-          <div class="field"><label>Email</label><input class="input" type="email" placeholder="name@school.edu" value="${escapeHtml(state.loginForm.email)}" oninput="updateLoginForm('email',this.value)"></div>
-          <div class="field"><label>Password</label><input class="input" type="password" placeholder="Enter password" value="${escapeHtml(state.loginForm.password)}" oninput="updateLoginForm('password',this.value)"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px"><div style="color:var(--muted);font-size:13px">Role-based access enabled</div><button class="button primary" onclick="login()">Sign In</button></div>
-          <div class="demo-grid">
-            ${DEMO_USERS.map(u=>`<div class="demo" onclick="fillDemo('${u.email}','${u.password}')"><div class="demo-top"><strong>${escapeHtml(u.name)}</strong><span class="mini ${u.role}">${escapeHtml(u.badge)}</span></div><div style="margin-top:8px;color:var(--muted);font-size:13px">${escapeHtml(u.email)}</div><div style="margin-top:4px;color:#8aa;font-size:12px">Tap to autofill credentials</div></div>`).join('')}
-          </div>
-        </div>
-      </section>
-    </div>`;
+  return `<div class="login-shell"><section class="hero"><div><span class="badge">School counseling portal</span><h1>Support booking that feels calm and easy.</h1><p>This website helps students schedule guidance appointments, lets counselors review requests faster, and gives admins a clearer overview of school support activity.</p><div class="feature-grid"><div class="feature"><strong>Better student flow</strong><span>Students can request help without walking around campus or waiting for manual confirmation.</span></div><div class="feature"><strong>Cleaner counselor queue</strong><span>Requests, schedules, and actions stay in one place with less confusion.</span></div><div class="feature"><strong>Organized records</strong><span>Appointments stay visible and easier to track for guidance operations.</span></div><div class="feature"><strong>Gentler interface</strong><span>Balanced spacing, softer contrast, and clearer hierarchy improve usability.</span></div></div></div><div class="feature"><strong>Demo access</strong><span>Use one of the accounts on the right to test the full website flow.</span></div></section><section class="login-wrap"><div class="login-card"><h2>Welcome back</h2><p>Sign in to continue to the Guidance Appointment System.</p><div class="field"><label>Email</label><input class="input" value="${escapeHtml(state.loginForm.email)}" oninput="updateLoginForm('email',this.value)" placeholder="Enter your school email"></div><div class="field"><label>Password</label><input class="input" type="password" value="${escapeHtml(state.loginForm.password)}" oninput="updateLoginForm('password',this.value)" placeholder="Enter your password"></div><div class="action-row" style="margin-top:20px"><button class="button primary" style="flex:1" onclick="login()">Sign in</button></div>${state.authError ? `<div class="error">${escapeHtml(state.authError)}</div>` : ''}<div class="demo-grid"><div class="demo" onclick="fillDemo('student@school.edu','student123')"><div class="demo-top"><strong>Student Demo</strong><span class="mini student">Student</span></div><div class="sub">student@school.edu · student123</div></div><div class="demo" onclick="fillDemo('counselor@school.edu','counselor123')"><div class="demo-top"><strong>Counselor Demo</strong><span class="mini counselor">Counselor</span></div><div class="sub">counselor@school.edu · counselor123</div></div><div class="demo" onclick="fillDemo('admin@school.edu','admin123')"><div class="demo-top"><strong>Admin Demo</strong><span class="mini admin">Admin</span></div><div class="sub">admin@school.edu · admin123</div></div></div></div></section></div>`;
 }
 function renderSidebar(){
-  return `<aside class="sidebar ${state.sidebarOpen ? 'open' : ''}" id="sidebar">
-    <div class="brand"><div class="brand-logo">G</div><div><h1>Guidance Appoint</h1><p>School Support Portal</p></div></div>
-    <div class="nav"><div class="nav-label">Workspace</div>
-      <button class="nav-btn active"><span class="nav-icon">◫</span>Dashboard</button>
-      <button class="nav-btn"><span class="nav-icon">☰</span>Appointments</button>
-      <button class="nav-btn"><span class="nav-icon">🗓</span>Schedule</button>
-      <button class="nav-btn"><span class="nav-icon">🔔</span>Notifications</button>
-      <button class="nav-btn"><span class="nav-icon">⚙</span>Settings</button>
-    </div>
-    <div class="user-card"><strong>${escapeHtml(state.currentUser.name)}</strong><p>${escapeHtml(state.currentUser.badge)} account currently active</p><button class="button" onclick="logout()">Sign Out</button></div>
-  </aside>`;
+  return `<aside class="sidebar ${state.sidebarOpen?'open':''}" id="sidebar"><div class="brand"><div class="brand-logo">G</div><div><h1>Guidance Portal</h1><p>School support website</p></div></div><nav class="nav"><div class="nav-label">Navigation</div>${currentNav().map(item=>`<button class="nav-btn ${state.page===item.id?'active':''}" onclick="setPage('${item.id}')"><span class="nav-icon">${item.icon}</span><span>${item.label}</span></button>`).join('')}</nav><div class="user-card"><strong>${escapeHtml(state.currentUser.name)}</strong><p>${escapeHtml(state.role.charAt(0).toUpperCase()+state.role.slice(1))} account</p><button class="button" onclick="logout()">Sign out</button></div></aside>`;
 }
 function renderTop(){
-  const title = state.role === 'student' ? 'Student Dashboard' : state.role === 'counselor' ? 'Counselor Dashboard' : 'Admin Dashboard';
-  return `<div class="topbar"><div><div style="font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--teal)">Guidance Appointment System</div><div style="font-size:30px;font-weight:800;margin-top:6px">${title}</div><div class="sub" style="margin-top:8px">A clearer and more comfortable system for booking counseling, advising, and support appointments.</div></div><div class="search"><span>⌕</span><input placeholder="Search appointments" value="${escapeHtml(state.search)}" oninput="setSearch(this.value)"></div></div>`;
+  return `<header class="topbar"><div><div class="badge">Guidance Appointment System</div><div style="margin-top:10px"><strong style="font-size:22px">${escapeHtml(pageTitle())}</strong><div class="sub">${escapeHtml(pageDesc())}</div></div></div><div class="search"><span>🔎</span><input value="${escapeHtml(state.search)}" oninput="setSearch(this.value)" placeholder="Search appointments, names, status, or dates"></div></header>`;
 }
 function renderHeroStrip(){
-  return `<section class="hero-strip"><h2>Welcome back, ${escapeHtml(state.currentUser.name)}.</h2><p>${state.role==='student' ? 'Book appointments, track your request status, and reach support services without the usual friction.' : state.role==='counselor' ? 'Review student requests, manage availability, and respond faster with a simpler workflow.' : 'Monitor appointments, user activity, and future system actions from one organized admin view.'}</p></section>`;
+  return `<section class="hero-strip"><h2>Hello, ${escapeHtml(state.currentUser.name)}.</h2><p>${state.role==='student' ? 'Use this portal to book appointments, review schedules, and stay updated on your support requests.' : state.role==='counselor' ? 'Work through student requests, keep an eye on today’s queue, and manage availability more clearly.' : 'Monitor activity across the portal with a cleaner structure and role-based sections.'}</p></section>`;
 }
-function renderStats(){ const s = stats(); return `<div class="stats">
-  <div class="card"><div class="stat-top"><div><div class="stat-kicker">Total Appointments</div><div class="stat-value">${s.total}</div><div class="sub">All current records</div></div><div class="icon-chip">🗓</div></div></div>
-  <div class="card"><div class="stat-top"><div><div class="stat-kicker">Pending Requests</div><div class="stat-value">${s.pending}</div><div class="sub">Awaiting action</div></div><div class="icon-chip">⏳</div></div></div>
-  <div class="card"><div class="stat-top"><div><div class="stat-kicker">Approved</div><div class="stat-value">${s.approved}</div><div class="sub">Confirmed schedules</div></div><div class="icon-chip">✓</div></div></div>
-  <div class="card"><div class="stat-top"><div><div class="stat-kicker">Active Counselors</div><div class="stat-value">${s.counselors}</div><div class="sub">Counselors in system</div></div><div class="icon-chip">👤</div></div></div>
-</div>`; }
+function renderStats(){ const s = stats(); return `<div class="stats"><div class="card"><div class="stat-top"><div><div class="stat-kicker">Total Appointments</div><div class="stat-value">${s.total}</div><div class="sub">All current records</div></div><div class="icon-chip">🗓</div></div></div><div class="card"><div class="stat-top"><div><div class="stat-kicker">Pending Requests</div><div class="stat-value">${s.pending}</div><div class="sub">Awaiting action</div></div><div class="icon-chip">⏳</div></div></div><div class="card"><div class="stat-top"><div><div class="stat-kicker">Approved</div><div class="stat-value">${s.approved}</div><div class="sub">Confirmed schedules</div></div><div class="icon-chip">✓</div></div></div><div class="card"><div class="stat-top"><div><div class="stat-kicker">Active Counselors</div><div class="stat-value">${s.counselors}</div><div class="sub">Counselors in system</div></div><div class="icon-chip">👤</div></div></div></div>`; }
 function appointmentCard(a, actions=''){ return `<div class="appointment"><div class="appointment-top"><div><h4>${escapeHtml(a.purpose)}</h4><span class="status ${statusClass(a.status)}">${escapeHtml(a.status)}</span><div class="meta"><div><strong>Student:</strong> ${escapeHtml(a.student)}</div><div><strong>Counselor:</strong> ${escapeHtml(a.counselor)}</div><div><strong>Schedule:</strong> ${escapeHtml(a.date)} • ${escapeHtml(a.time)}</div></div><div class="note">${escapeHtml(a.note)}</div></div><div>${actions}</div></div></div>`; }
-function renderStudent(){
-  const mine = state.appointments.filter(a=>a.student==='Benedict Tanghal');
-  return `<div class="content-grid"><section class="card"><h3>Book an Appointment</h3><div class="sub">Submit a request for counseling, academic advising, or student support.</div>${state.successMessage ? `<div class="success">${escapeHtml(state.successMessage)}</div>` : ''}
-    <div class="two-col" style="margin-top:16px">
-      <div class="field" style="margin-top:0;grid-column:1/-1"><label>Purpose</label><select class="select" onchange="updateForm('purpose',this.value)"><option ${state.form.purpose==='Counseling'?'selected':''}>Counseling</option><option ${state.form.purpose==='Academic Advising'?'selected':''}>Academic Advising</option><option ${state.form.purpose==='Student Support'?'selected':''}>Student Support</option></select></div>
-      <div class="field" style="margin-top:0"><label>Counselor</label><select class="select" onchange="changeCounselor(this.value)">${Object.keys(SLOTS).map(name=>`<option value="${escapeHtml(name)}" ${state.form.counselor===name?'selected':''}>${escapeHtml(name)}</option>`).join('')}</select></div>
-      <div class="field" style="margin-top:0"><label>Date</label><input class="input" type="date" value="${escapeHtml(state.form.date)}" onchange="updateForm('date',this.value)"></div>
-      <div class="field" style="margin-top:0"><label>Time Slot</label><select class="select" onchange="updateForm('time',this.value)">${(SLOTS[state.form.counselor]||[]).map(slot=>`<option value="${escapeHtml(slot)}" ${state.form.time===slot?'selected':''}>${escapeHtml(slot)}</option>`).join('')}</select></div>
-      <div class="field" style="margin-top:0;grid-column:1/-1"><label>Short Description</label><textarea class="textarea" placeholder="Briefly describe your concern..." oninput="updateForm('note',this.value)">${escapeHtml(state.form.note)}</textarea></div>
-    </div>
-    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px"><button class="button secondary" onclick="resetForm()">Reset</button><button class="button primary" onclick="submitAppointment()">Submit Request</button></div>
-  </section>
-  <section class="card"><h3>My Appointments</h3><div class="sub">Track your current and past requests.</div>${mine.length ? mine.map(a=>appointmentCard(a)).join('') : '<div class="empty">No appointments yet.</div>'}</section></div>`;
-}
-function renderCounselor(){
-  const list = filteredAppointments().filter(a=>a.counselor==='Ms. Rivera');
-  return `<div class="card"><div class="tabs"><button class="tab ${state.counselorTab==='requests'?'active':''}" onclick="setCounselorTab('requests')">Requests</button><button class="tab ${state.counselorTab==='schedule'?'active':''}" onclick="setCounselorTab('schedule')">Schedule</button></div>
-  ${state.counselorTab==='requests' ? `${list.length ? list.map(a=>appointmentCard(a, `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class='button primary' style='padding:11px 14px' onclick="updateStatus(${a.id},'Approved')">Approve</button><button class='button secondary' style='padding:11px 14px' onclick="updateStatus(${a.id},'Rescheduled')">Reschedule</button><button class='button soft' style='padding:11px 14px;color:var(--rose);border-color:#ffd1dc;background:#fff5f7' onclick="updateStatus(${a.id},'Rejected')">Reject</button></div>`)).join('') : '<div class="empty">No matching requests found.</div>'}` : `${Object.entries(SLOTS).map(([name,slots])=>`<div class="appointment"><h4 style='margin:0'>${escapeHtml(name)}</h4><div class="slot-wrap">${slots.map(slot=>`<span class="slot">${escapeHtml(slot)}</span>`).join('')}</div></div>`).join('')}`}
-  </div>`;
-}
-function renderAdmin(){
+function renderDashboard(){
+  if(state.role==='student'){
+    const mine = state.appointments.filter(a=>a.student==='Benedict Tanghal');
+    return `<div class="content-grid"><section class="card"><h3>Upcoming Support Activity</h3><div class="sub">A quick look at your recent and upcoming appointments.</div>${mine.length ? mine.slice(0,2).map(a=>appointmentCard(a)).join('') : '<div class="empty">No upcoming appointments yet.</div>'}</section><section class="stack"><div class="card"><h3>Quick Actions</h3><div class="sub">Fast ways to move through the portal.</div><div style="display:grid;gap:12px;margin-top:14px"><button class="button primary" onclick="setPage('appointments')">Book new appointment</button><button class="button secondary" onclick="setPage('schedule')">View available slots</button><button class="button secondary" onclick="setPage('notifications')">Open notifications</button></div></div><div class="card"><h3>Student Notes</h3><div class="sub">Current reminders for your support requests.</div><div style="display:grid;gap:10px;margin-top:14px;font-size:14px;color:#5b6f88"><div>• Keep your concern description short but clear.</div><div>• Check the available schedule before booking.</div><div>• Watch for approval or reschedule notifications.</div></div></div></section></div>`;
+  }
+  if(state.role==='counselor'){
+    const mine = filteredAppointments().filter(a=>a.counselor==='Ms. Rivera');
+    return `<div class="content-grid"><section class="card"><h3>Today’s Request Queue</h3><div class="sub">Latest requests assigned to your dashboard.</div>${mine.length ? mine.slice(0,3).map(a=>appointmentCard(a, `<div class='action-row'><button class='button primary' style='padding:11px 14px' onclick="updateStatus(${a.id},'Approved')">Approve</button><button class='button secondary' style='padding:11px 14px' onclick="updateStatus(${a.id},'Rescheduled')">Reschedule</button></div>`)).join('') : '<div class="empty">No assigned requests found.</div>'}</section><section class="stack"><div class="card"><h3>Quick Actions</h3><div class="sub">Common tasks for reviewing student requests.</div><div style="display:grid;gap:12px;margin-top:14px"><button class="button primary" onclick="setPage('appointments')">Open full request list</button><button class="button secondary" onclick="setPage('schedule')">Review availability</button><button class="button secondary" onclick="setPage('notifications')">Check updates</button></div></div><div class="card"><h3>Guidance Notes</h3><div class="sub">Simple queue reminders.</div><div style="display:grid;gap:10px;margin-top:14px;font-size:14px;color:#5b6f88"><div>• Approve or reschedule requests clearly.</div><div>• Keep open slots visible to students.</div><div>• Review the dashboard before the next day starts.</div></div></div></section></div>`;
+  }
   const list = filteredAppointments();
-  return `<div class="content-grid"><section class="card"><h3>Appointment Overview</h3><div class="sub">Admin-wide view of all appointment activity.</div>${list.length ? list.map(a=>appointmentCard(a)).join('') : '<div class="empty">No appointments found.</div>'}</section>
-  <section class="stack"><div class="card"><h3>Quick Actions</h3><div class="sub">Planned admin controls for the next builds.</div><div style="display:grid;gap:12px;margin-top:14px"><button class="button primary" style="justify-content:flex-start">Add Counselor</button><button class="button secondary" style="justify-content:flex-start">Manage Concern Types</button><button class="button secondary" style="justify-content:flex-start">View Reports</button><button class="button secondary" style="justify-content:flex-start">Export Appointments</button></div></div>
-  <div class="card"><h3>System Notes</h3><div class="sub">Current scope of this fixed website build.</div><div style="display:grid;gap:10px;margin-top:14px;font-size:14px;color:#5b6f88"><div>✓ Student booking form</div><div>✓ Role-based login flow</div><div>✓ Counselor approval actions</div><div>↻ Database integration next</div><div>↻ Notifications later</div><div>⚠ Demo authentication only</div></div></div></section></div>`;
+  return `<div class="content-grid"><section class="card"><h3>System Overview</h3><div class="sub">Latest portal activity across all appointment records.</div>${list.length ? list.slice(0,3).map(a=>appointmentCard(a)).join('') : '<div class="empty">No appointment activity yet.</div>'}</section><section class="stack"><div class="card"><h3>Admin Actions</h3><div class="sub">Main controls for this website structure.</div><div style="display:grid;gap:12px;margin-top:14px"><button class="button primary" onclick="setPage('appointments')">Review all appointments</button><button class="button secondary" onclick="setPage('users')">Open users list</button><button class="button secondary" onclick="setPage('notifications')">Review notices</button></div></div><div class="card"><h3>Build Status</h3><div class="sub">This step adds real section-based navigation.</div><div style="display:grid;gap:10px;margin-top:14px;font-size:14px;color:#5b6f88"><div>✓ Role-based login</div><div>✓ Sidebar navigation by role</div><div>✓ Separate pages and sections</div><div>↻ Database integration next</div></div></div></section></div>`;
+}
+function renderStudentAppointments(){
+  const mine = state.appointments.filter(a=>a.student==='Benedict Tanghal');
+  return `<div class="content-grid"><section class="card"><h3>Book an Appointment</h3><div class="sub">Submit a request for counseling, academic advising, or student support.</div>${state.successMessage ? `<div class="success">${escapeHtml(state.successMessage)}</div>` : ''}<div class="two-col" style="margin-top:16px"><div class="field" style="margin-top:0;grid-column:1/-1"><label>Purpose</label><select class="select" onchange="updateForm('purpose',this.value)"><option ${state.form.purpose==='Counseling'?'selected':''}>Counseling</option><option ${state.form.purpose==='Academic Advising'?'selected':''}>Academic Advising</option><option ${state.form.purpose==='Student Support'?'selected':''}>Student Support</option></select></div><div class="field" style="margin-top:0"><label>Counselor</label><select class="select" onchange="changeCounselor(this.value)">${Object.keys(SLOTS).map(name=>`<option value="${escapeHtml(name)}" ${state.form.counselor===name?'selected':''}>${escapeHtml(name)}</option>`).join('')}</select></div><div class="field" style="margin-top:0"><label>Date</label><input class="input" type="date" value="${escapeHtml(state.form.date)}" onchange="updateForm('date',this.value)"></div><div class="field" style="margin-top:0"><label>Time Slot</label><select class="select" onchange="updateForm('time',this.value)">${(SLOTS[state.form.counselor]||[]).map(slot=>`<option value="${escapeHtml(slot)}" ${state.form.time===slot?'selected':''}>${escapeHtml(slot)}</option>`).join('')}</select></div><div class="field" style="margin-top:0;grid-column:1/-1"><label>Short Description</label><textarea class="textarea" placeholder="Briefly describe your concern..." oninput="updateForm('note',this.value)">${escapeHtml(state.form.note)}</textarea></div></div><div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px"><button class="button secondary" onclick="resetForm()">Reset</button><button class="button primary" onclick="submitAppointment()">Submit Request</button></div></section><section class="card"><h3>My Appointments</h3><div class="sub">Track your current and past requests.</div>${mine.length ? mine.map(a=>appointmentCard(a)).join('') : '<div class="empty">No appointments yet.</div>'}</section></div>`;
+}
+function renderCounselorAppointments(){
+  const list = filteredAppointments().filter(a=>a.counselor==='Ms. Rivera');
+  return `<div class="page-grid"><section class="card"><h3>Request Queue</h3><div class="sub">Review student appointments assigned to your counseling queue.</div>${list.length ? list.map(a=>appointmentCard(a, `<div class='action-row'><button class='button primary' style='padding:11px 14px' onclick="updateStatus(${a.id},'Approved')">Approve</button><button class='button secondary' style='padding:11px 14px' onclick="updateStatus(${a.id},'Rescheduled')">Reschedule</button><button class='button soft' style='padding:11px 14px;color:var(--rose);border-color:#ffd1dc;background:#fff5f7' onclick="updateStatus(${a.id},'Rejected')">Reject</button></div>`)).join('') : '<div class="empty">No matching requests found.</div>'}</section></div>`;
+}
+function renderAdminAppointments(){
+  const list = filteredAppointments();
+  return `<div class="page-grid"><section class="card"><h3>All Appointments</h3><div class="sub">Admin-wide view of all appointment activity.</div>${list.length ? list.map(a=>appointmentCard(a)).join('') : '<div class="empty">No appointments found.</div>'}</section></div>`;
+}
+function renderSchedule(){
+  return `<div class="page-grid"><section class="card"><h3>${state.role==='student'?'Available Time Slots':'Current Availability'}</h3><div class="sub">${state.role==='student'?'Review open counselor schedules before booking.':'Preview the guidance schedule currently shown in the system.'}</div>${Object.entries(SLOTS).map(([name,slots])=>`<div class="appointment"><h4 style="margin:0">${escapeHtml(name)}</h4><div class="slot-wrap">${slots.map(slot=>`<span class="slot">${escapeHtml(slot)}</span>`).join('')}</div></div>`).join('')}</section></div>`;
+}
+function renderNotifications(){
+  return `<div class="page-grid"><section class="card"><h3>Notifications</h3><div class="sub">Recent reminders, updates, and appointment messages.</div>${state.notifications.map(n=>`<div class="notif"><div class="notif-icon">🔔</div><div><strong>${escapeHtml(n.title)}</strong><div class="note" style="margin-top:6px">${escapeHtml(n.message)}</div><div class="sub" style="margin-top:8px">${escapeHtml(n.time)}</div></div></div>`).join('')}</section></div>`;
+}
+function renderUsers(){
+  const users = [
+    {name:'Benedict Tanghal', role:'Student', email:'student@school.edu', status:'Active'},
+    {name:'Ms. Rivera', role:'Counselor', email:'counselor@school.edu', status:'Active'},
+    {name:'Admin Office', role:'Admin', email:'admin@school.edu', status:'Active'}
+  ];
+  return `<div class="page-grid"><section class="card"><h3>User Directory</h3><div class="sub">Starter user list for the admin view.</div><div style="margin-top:18px"><div class="list-row head"><div>Name</div><div>Role</div><div>Email</div><div>Status</div></div>${users.map(u=>`<div class="list-row"><div><strong>${escapeHtml(u.name)}</strong></div><div>${escapeHtml(u.role)}</div><div>${escapeHtml(u.email)}</div><div><span class="pill">${escapeHtml(u.status)}</span></div></div>`).join('')}</div></section></div>`;
+}
+function renderSettings(){
+  return `<div class="content-grid"><section class="card"><h3>Profile Settings</h3><div class="sub">Basic profile information for this demo build.</div><div class="profile" style="margin-top:16px"><div class="avatar">${escapeHtml((state.currentUser.name||'U').charAt(0))}</div><div><strong style="font-size:22px">${escapeHtml(state.currentUser.name)}</strong><div class="sub" style="margin-top:6px">${escapeHtml(state.currentUser.email)}</div><div style="margin-top:10px"><span class="pill">${escapeHtml(state.role.charAt(0).toUpperCase()+state.role.slice(1))}</span></div></div></div><div class="two-col" style="margin-top:18px"><div class="field" style="margin-top:0"><label>Full Name</label><input class="input" value="${escapeHtml(state.currentUser.name)}"></div><div class="field" style="margin-top:0"><label>Email</label><input class="input" value="${escapeHtml(state.currentUser.email)}"></div><div class="field" style="margin-top:0"><label>Password</label><input class="input" type="password" value="demo-password"></div><div class="field" style="margin-top:0"><label>Notification Preference</label><select class="select"><option>In-app only</option><option>Email and in-app</option></select></div></div><div class="action-row" style="margin-top:18px"><button class="button primary">Save Changes</button><button class="button secondary">Cancel</button></div></section><section class="stack"><div class="card"><h3>System Preference Notes</h3><div class="sub">Placeholder settings for the current website version.</div><div style="display:grid;gap:10px;margin-top:14px;font-size:14px;color:#5b6f88"><div>• Profile saving is visual only for now.</div><div>• Authentication is still demo-based.</div><div>• Real user storage comes in the database step.</div></div></div></section></div>`;
+}
+function renderPage(){
+  if(state.page==='dashboard') return renderDashboard();
+  if(state.page==='appointments') return state.role==='student' ? renderStudentAppointments() : state.role==='counselor' ? renderCounselorAppointments() : renderAdminAppointments();
+  if(state.page==='schedule') return renderSchedule();
+  if(state.page==='notifications') return renderNotifications();
+  if(state.page==='settings') return renderSettings();
+  if(state.page==='users') return renderUsers();
+  return renderDashboard();
 }
 function renderApp(){
   document.getElementById('mobileBar').classList.remove('hidden');
-  return `<div class="layout">${renderSidebar()}<main class="main">${renderTop()}${renderHeroStrip()}${renderStats()}${state.role==='student'?renderStudent():state.role==='counselor'?renderCounselor():renderAdmin()}</main></div>`;
+  return `<div class="layout">${renderSidebar()}<main class="main">${renderTop()}${renderHeroStrip()}${renderStats()}${renderPage()}</main></div>`;
 }
 function render(){ app.innerHTML = state.screen==='login' ? renderLogin() : renderApp(); }
 function updateLoginForm(field,val){ state.loginForm[field]=val; }
 function fillDemo(email,password){ state.loginForm.email=email; state.loginForm.password=password; state.authError=''; render(); }
-function login(){ const email = state.loginForm.email.trim().toLowerCase(); const pw = state.loginForm.password; const user = DEMO_USERS.find(u=>u.email.toLowerCase()===email && u.password===pw); if(!user){ state.authError='Invalid email or password. Use one of the demo accounts to continue.'; render(); return; } state.currentUser={...user}; state.role=user.role; state.screen='app'; state.sidebarOpen=false; state.authError=''; state.form.student=user.role==='student'?user.name:'Benedict Tanghal'; render(); }
-function logout(){ state.screen='login'; state.currentUser=null; state.role='student'; state.loginForm={email:'',password:''}; state.authError=''; state.sidebarOpen=false; render(); }
+function login(){ const email = state.loginForm.email.trim().toLowerCase(); const pw = state.loginForm.password; const user = DEMO_USERS.find(u=>u.email.toLowerCase()===email && u.password===pw); if(!user){ state.authError='Invalid email or password. Use one of the demo accounts to continue.'; render(); return; } state.currentUser={...user}; state.role=user.role; state.page='dashboard'; state.screen='app'; state.sidebarOpen=false; state.authError=''; state.form.student=user.role==='student'?user.name:'Benedict Tanghal'; render(); }
+function logout(){ state.screen='login'; state.currentUser=null; state.role='student'; state.page='dashboard'; state.loginForm={email:'',password:''}; state.authError=''; state.sidebarOpen=false; state.search=''; render(); }
 function toggleSidebar(){ state.sidebarOpen=!state.sidebarOpen; const el=document.getElementById('sidebar'); if(el) el.classList.toggle('open', state.sidebarOpen); }
 function setSearch(v){ state.search=v; render(); }
+function setPage(page){ state.page=page; state.successMessage=''; state.sidebarOpen=false; render(); }
 function updateForm(field,val){ state.form[field]=val; }
 function changeCounselor(v){ state.form.counselor=v; state.form.time=(SLOTS[v]||[])[0]||''; render(); }
-function resetForm(){ state.form={ student:'Benedict Tanghal', purpose:'Counseling', counselor:'Ms. Rivera', date:'', time:'09:00 AM', note:'' }; state.successMessage=''; render(); }
-function submitAppointment(){ if(!state.form.date || !state.form.time || !String(state.form.note).trim()){ alert('Please complete the required fields first.'); return; } state.appointments.unshift({ id:Date.now(), student:state.form.student, purpose:state.form.purpose, counselor:state.form.counselor, date:state.form.date, time:state.form.time, status:'Pending', note:String(state.form.note).trim() }); state.successMessage='Appointment request submitted successfully.'; resetForm(); state.successMessage='Appointment request submitted successfully.'; render(); }
-function updateStatus(id,status){ state.appointments=state.appointments.map(a=>a.id===id?{...a,status}:a); render(); }
-function setCounselorTab(tab){ state.counselorTab=tab; render(); }
-window.updateLoginForm=updateLoginForm; window.fillDemo=fillDemo; window.login=login; window.logout=logout; window.toggleSidebar=toggleSidebar; window.setSearch=setSearch; window.updateForm=updateForm; window.changeCounselor=changeCounselor; window.resetForm=resetForm; window.submitAppointment=submitAppointment; window.updateStatus=updateStatus; window.setCounselorTab=setCounselorTab;
+function resetForm(){ state.form={ student:'Benedict Tanghal', purpose:'Counseling', counselor:'Ms. Rivera', date:'', time:'09:00 AM', note:'' }; render(); }
+function submitAppointment(){ if(!state.form.date || !state.form.time || !String(state.form.note).trim()){ alert('Please complete the required fields first.'); return; } state.appointments.unshift({ id:Date.now(), student:state.form.student, purpose:state.form.purpose, counselor:state.form.counselor, date:state.form.date, time:state.form.time, status:'Pending', note:String(state.form.note).trim() }); state.successMessage='Appointment request submitted successfully.'; state.notifications.unshift({id:Date.now(), title:'New appointment request', message:`Your ${state.form.purpose.toLowerCase()} request was submitted and is now pending review.`, time:'Just now'}); state.form={ student:'Benedict Tanghal', purpose:'Counseling', counselor:'Ms. Rivera', date:'', time:'09:00 AM', note:'' }; render(); }
+function updateStatus(id,status){ state.appointments=state.appointments.map(a=>a.id===id?{...a,status}:a); const appt = state.appointments.find(a=>a.id===id); if(appt){ state.notifications.unshift({id:Date.now(), title:'Appointment updated', message:`${appt.purpose} for ${appt.student} is now ${status.toLowerCase()}.`, time:'Just now'}); } render(); }
+window.updateLoginForm=updateLoginForm; window.fillDemo=fillDemo; window.login=login; window.logout=logout; window.toggleSidebar=toggleSidebar; window.setSearch=setSearch; window.setPage=setPage; window.updateForm=updateForm; window.changeCounselor=changeCounselor; window.resetForm=resetForm; window.submitAppointment=submitAppointment; window.updateStatus=updateStatus;
 render();
 </script>
 </body>
