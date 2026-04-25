@@ -48,7 +48,18 @@
 <body>
   <div class="mobile-bar hidden" id="mobileBar"><div class="mobile-shell"><div style="display:flex;align-items:center;gap:10px"><img src="assets/app-icon.png" alt="Guidance Point logo" style="width:42px;height:42px;padding:4px;border-radius:14px;border:1px solid #dfeaf3;background:#fff;object-fit:contain"><strong>Guidance Point</strong></div><button class="mobile-menu" onclick="toggleSidebar()">☰ Menu</button></div></div>
   <div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
 <script>
+
+const supabaseUrl = "https://mmlhjsoptmygvjexdrbc.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tbGhqc29wdG15Z3ZqZXhkcmJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNzgxMDYsImV4cCI6MjA5MjY1NDEwNn0.kR_pl9JcZ48B9dfVp0LnO7c3-gNVUEIFLFwVkGsJTEE";
+
+const supabase = window.supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
+
 const state={
   screen:'login', authMode:'signin', role:'student', page:'dashboard', search:'', authError:'', authSuccess:'', sidebarOpen:false,
   loginForm:{email:'',password:''},
@@ -87,25 +98,59 @@ function updateLoginForm(k,v){state.loginForm[k]=v;}
 function updateRegisterForm(k,v){state.registerForm[k]=v;}
 function updateRegisterFormAndKeepTyping(k,v){state.registerForm[k]=v; state.authError=''; state.authSuccess='';}
 function fillDemo(email,password){state.loginForm={email,password};state.authError='';render();}
-function login(){const email=state.loginForm.email.trim().toLowerCase();const pw=state.loginForm.password;const user=state.users.find(u=>u.email.toLowerCase()===email&&u.password===pw&&u.status==='Active');if(!user){state.authError='Invalid email or password. Use a demo account or create a student account.';render();return;}state.currentUser={...user};state.role=user.role.toLowerCase();state.page='dashboard';state.screen='app';state.sidebarOpen=false;state.authError='';state.authSuccess='';state.search='';state.formError='';state.successMessage='';render();}
-function registerStudent(){
-const f=state.registerForm;
-const email=f.email.trim().toLowerCase();
-const reservedPatterns=['admin','administrator','guidance','counselor','counsellor','staff','office','principal','director'];
-if(!f.name.trim()||!email||!f.password.trim()||!f.yearLevel.trim()||!f.studentId.trim()){state.authError='Please complete all student registration fields.';render();return;}
-if(state.users.some(u=>u.email.toLowerCase()===email)){state.authError='That email is already being used.';render();return;}
-if(!/^[^\s@]+@(?:school\.edu|student\.school\.edu)$/i.test(email)){state.authError='Student sign up only accepts school student emails such as name@student.school.edu or name@school.edu.';render();return;}
-if(reservedPatterns.some(term=>email.includes(term))){state.authError='This sign-up form is only for students. Staff accounts must be created internally by admin.';render();return;}
-if(!/^\d{4,20}$/.test(f.studentId.trim())){state.authError='Student ID should contain numbers only.';render();return;}
-const user={id:Date.now(),name:f.name.trim(),role:'Student',email:email,password:f.password,status:'Active',department:f.yearLevel.trim(),studentId:f.studentId.trim(),lastActive:'Just now'};
-state.users.unshift(user);
-state.authSuccess='Student account created. You can now sign in.';
-state.authError='';
-state.registerForm={name:'',email:'',password:'',yearLevel:'',studentId:''};
-state.authMode='signin';
-state.loginForm.email=user.email;
-render();
+async function login() {
+  const email = state.loginForm.email.trim().toLowerCase();
+  const pw = state.loginForm.password;
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .eq("password", pw)
+    .single();
+
+  if (error || !data) {
+    state.authError = "Invalid email or password";
+    render();
+    return;
+  }
+
+  state.currentUser = data;
+  state.role = data.role.toLowerCase();
+  state.page = "dashboard";
+  state.screen = "app";
+
+  render();
 }
+
+async function registerStudent() {
+  const f = state.registerForm;
+
+  const { data, error } = await supabase
+    .from("users")
+    .insert([
+      {
+        name: f.name,
+        role: "Student",
+        email: f.email,
+        password: f.password,
+        status: "Active",
+        department: f.yearLevel,
+        student_id: f.studentId,
+        last_active: "Just now"
+      }
+    ]);
+
+  if (error) {
+    state.authError = error.message;
+    render();
+    return;
+  }
+
+  state.authSuccess = "Student account created successfully!";
+  render();
+}
+
 function logout(){state.screen='login';state.currentUser=null;state.page='dashboard';state.authMode='signin';state.loginForm={email:'',password:''};state.authError='';state.authSuccess='';state.sidebarOpen=false;render();}
 function toggleSidebar(){state.sidebarOpen=!state.sidebarOpen;render();}
 function setPage(p){state.page=p;state.sidebarOpen=false;state.search='';state.successMessage='';state.formError='';render();}
@@ -123,7 +168,42 @@ function appointmentCard(a,actions=''){return `<div class="appointment"><div cla
 function getAvailableBookingSlots(counselor,date,ignoreId){const base=[...(SLOTS[counselor]||[])]; if(!date) return base; const blocked=new Set(state.appointments.filter(a=>a.counselor===counselor&&a.date===date&&a.id!==ignoreId&&activeStatuses.includes(a.status)).map(a=>a.time)); return base.filter(s=>!blocked.has(s));}
 function updateBookingOptions(){const opts=getAvailableBookingSlots(state.form.counselor,state.form.date,state.editAppointmentId); if(!opts.includes(state.form.time)) state.form.time=opts[0]||''; render();}
 function updateForm(k,v){state.form[k]=v; state.formError=''; state.successMessage=''; if(k==='counselor'||k==='date') updateBookingOptions();}
-function saveBooking(){const f=state.form; if(!f.date||!f.time||!f.note.trim()) {state.formError='Please complete all booking fields.'; render(); return;} const me=state.currentUser.name; const conflict=state.appointments.find(a=>a.student===me&&a.date===f.date&&a.time===f.time&&a.id!==state.editAppointmentId&&activeStatuses.includes(a.status)); if(conflict){state.formError='You already have an active appointment at that same date and time.'; render(); return;} if(!getAvailableBookingSlots(f.counselor,f.date,state.editAppointmentId).includes(f.time)){state.formError='That time slot is already taken. Please choose another one.'; render(); return;} if(state.editAppointmentId){state.appointments=state.appointments.map(a=>a.id===state.editAppointmentId?{...a,purpose:f.purpose,counselor:f.counselor,date:f.date,time:f.time,note:f.note,status:'Rescheduled'}:a); state.successMessage='Appointment updated and marked as rescheduled.'; state.editAppointmentId=null;} else {state.appointments.unshift({id:Date.now(),student:me,purpose:f.purpose,counselor:f.counselor,date:f.date,time:f.time,status:'Pending',note:f.note,remark:''}); state.successMessage='Appointment request submitted.';} state.formError=''; state.form={purpose:'Counseling',counselor:'Ms. Rivera',date:'',time:'09:00 AM',note:''}; render();}
+
+async function saveBooking() {
+  const f = state.form;
+
+  if (!f.date || !f.time || !f.note.trim()) {
+    state.formError = "Please complete all booking fields.";
+    render();
+    return;
+  }
+
+  const me = state.currentUser.name;
+
+  const { error } = await supabase
+    .from("appointments")
+    .insert([
+      {
+        student: me,
+        purpose: f.purpose,
+        counselor: f.counselor,
+        date: f.date,
+        time: f.time,
+        status: "Pending",
+        note: f.note,
+        remark: ""
+      }
+    ]);
+
+  if (error) {
+    state.formError = error.message;
+  } else {
+    state.successMessage = "Appointment submitted successfully!";
+  }
+
+  render();
+}
+
 function startReschedule(id){const a=state.appointments.find(x=>x.id===id); if(!a) return; state.editAppointmentId=id; state.form={purpose:a.purpose,counselor:a.counselor,date:a.date,time:a.time,note:a.note}; state.page='appointments'; state.successMessage='You are now editing an appointment.'; render();}
 function cancelAppointment(id){state.appointments=state.appointments.map(a=>a.id===id?{...a,status:'Cancelled'}:a); state.successMessage='Appointment cancelled.'; render();}
 function updateRemarkDraft(id,val){state.remarkDrafts[id]=val;}
@@ -151,3 +231,5 @@ function render(){app.innerHTML=state.screen==='login'?renderLogin():renderApp()
 render();
 </script>
 </body></html>
+
+
